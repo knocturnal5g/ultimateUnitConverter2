@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Unit Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+
+        .converter {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            min-width: 120px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        #result {
+            font-size: 1.2em;
+            color: #27ae60;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔁 Ultimate Unit Converter</h1>
+        
+        <select id="category">
+            <option value="length">Length</option>
+            <option value="weight">Weight</option>
+            <option value="temperature">Temperature</option>
+            <option value="volume">Volume</option>
+            <option value="time">Time</option>
+            <option value="digital">Digital Storage</option>
+            <option value="area">Area</option>
+            <option value="speed">Speed</option>
+            <option value="energy">Energy</option>
+            <option value="pressure">Pressure</option>
+            <option value="power">Power</option>
+            <option value="angle">Angle</option>
+            <option value="cooking">Cooking</option>
+        </select>
+
+        <div class="converter">
+            <input type="number" id="inputValue" placeholder="Enter value">
+            <select id="inputUnit"></select>
+            <span>to</span>
+            <select id="outputUnit"></select>
+            <button onclick="convert()">Convert</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const units = {
+            length: { meters: 1, kilometers: 0.001, centimeters: 100, miles: 0.000621371, feet: 3.28084, inches: 39.3701 },
+            weight: { kilograms: 1, grams: 1000, pounds: 2.20462, ounces: 35.274 },
+            temperature: { celsius: 'celsius', fahrenheit: 'fahrenheit', kelvin: 'kelvin' },
+            volume: { liters: 1, milliliters: 1000, cubicMeters: 0.001, gallons: 0.264172, cubicFeet: 0.0353147, pints: 2.11338 },
+            time: { seconds: 1, minutes: 1/60, hours: 1/3600, days: 1/86400, weeks: 1/604800, years: 1/31536000 },
+            digital: { bytes: 1, kilobytes: 1/1000, megabytes: 1/1e6, gigabytes: 1/1e9, terabytes: 1/1e12, kibibytes: 1/1024, mebibytes: 1/(1024**2) },
+            area: { squareMeters: 1, squareKilometers: 1e-6, squareFeet: 10.7639, squareMiles: 3.861e-7, acres: 0.000247105, hectares: 0.0001 },
+            speed: { metersPerSecond: 1, kilometersPerHour: 3.6, milesPerHour: 2.23694, knots: 1.94384, feetPerSecond: 3.28084 },
+            energy: { joules: 1, kilojoules: 0.001, calories: 0.239006, kilocalories: 0.000239006, wattHours: 0.000277778, kilowattHours: 2.7778e-7 },
+            pressure: { pascals: 1, kilopascals: 0.001, bars: 1e-5, psi: 0.000145038, atmospheres: 9.8692e-6 },
+            power: { watts: 1, kilowatts: 0.001, horsepower: 0.00134102, megawatts: 1e-6 },
+            angle: { radians: 1, degrees: 57.2958, gradians: 63.662 },
+            cooking: { teaspoons: 1, tablespoons: 0.333333, cups: 0.0208333, milliliters: 4.92892, liters: 0.00492892, fluidOunces: 0.166667 }
+        };
+
+        // Initialize unit dropdowns
+        document.getElementById('category').addEventListener('change', function() {
+            const category = this.value;
+            const inputUnit = document.getElementById('inputUnit');
+            const outputUnit = document.getElementById('outputUnit');
+            
+            inputUnit.innerHTML = '';
+            outputUnit.innerHTML = '';
+            
+            Object.keys(units[category]).forEach(unit => {
+                inputUnit.add(new Option(unit, unit));
+                outputUnit.add(new Option(unit, unit));
+            });
+        });
+
+        // Trigger initial load
+        document.getElementById('category').dispatchEvent(new Event('change'));
+
+        // Conversion logic
+        function convert() {
+            const category = document.getElementById('category').value;
+            const inputValue = parseFloat(document.getElementById('inputValue').value);
+            const inputUnit = document.getElementById('inputUnit').value;
+            const outputUnit = document.getElementById('outputUnit').value;
+            let result;
+
+            if (isNaN(inputValue)) {
+                document.getElementById('result').textContent = "Please enter a valid number!";
+                return;
+            }
+
+            if (category === 'temperature') {
+                result = convertTemperature(inputValue, inputUnit, outputUnit);
+            } else {
+                const baseValue = inputValue / units[category][inputUnit];
+                result = baseValue * units[category][outputUnit];
+            }
+
+            document.getElementById('result').textContent = 
+                `${inputValue} ${inputUnit} = ${result.toFixed(2)} ${outputUnit}`;
+        }
+
+        // Temperature conversion
+        function convertTemperature(value, fromUnit, toUnit) {
+            if (fromUnit === toUnit) return value;
+
+            let celsius;
+            switch (fromUnit) {
+                case 'fahrenheit':
+                    celsius = (value - 32) * 5/9;
+                    break;
+                case 'kelvin':
+                    celsius = value - 273.15;
+                    break;
+                default:
+                    celsius = value;
+            }
+
+            switch (toUnit) {
+                case 'fahrenheit':
+                    return (celsius * 9/5) + 32;
+                case 'kelvin':
+                    return celsius + 273.15;
+                default:
+                    return celsius;
+            }
+        }
+    </script>
+</body>
+</html>
